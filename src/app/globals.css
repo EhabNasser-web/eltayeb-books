@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * نظام ألوان «الطيب للكتب» — مستخرج من اللوجو (موثّق في docs/DESIGN.md).
+ * ممنوع استخدام أي لون خارج هذا النظام.
+ */
+:root {
+  /* ورق دافي للخلفية — مش أبيض */
+  --paper: #efe8d9;
+  --paper-deep: #e4d5b4;
+
+  /* حبر أخضر غامق جدًا للنص — مش أسود صريح */
+  --ink: #22302a;
+  --ink-soft: #3d4a43;
+
+  /* الأخضر الزيتوني الأساسي */
+  --primary: #3a5246;
+  --primary-dark: #2f4439;
+  --primary-deep: #24352c;
+
+  /* الذهبي — للتفاصيل الصغيرة والخطوط الرفيعة فقط */
+  --accent: #b69c5c;
+  --accent-deep: #7c622f;
+
+  --line: #d5c69e;
+  --muted: #67634f;
+
+  /* ألوان الحالات — محسوبة لتباين AA على الورق */
+  --success: #336e3d;
+  --error: #a23325;
+  --warning: #8a5c10;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body), sans-serif;
+    font-size: 1.0625rem; /* 17px حد أدنى */
+    line-height: 1.9;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* نصوص طويلة: سطر لا يزيد عن ~65 حرف */
+  .prose-tayeb {
+    max-width: 65ch;
+    line-height: 1.9;
+  }
+  .prose-tayeb p + p {
+    margin-block-start: 1em;
+  }
+}
+
+/* حركات هادئة فقط، وتحترم تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
