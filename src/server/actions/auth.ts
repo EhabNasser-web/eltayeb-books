@@ -84,17 +84,21 @@ export async function logoutAction(): Promise<void> {
 export async function mfaEnrollAction(): Promise<
   { ok: true; factorId: string; secret: string; uri: string } | { ok: false; error: string }
 > {
-  const supa = await createSessionClient();
-  const {
-    data: { user },
-  } = await supa.auth.getUser();
-  if (!user) return { ok: false, error: "سجّل الدخول أولًا" };
-  const { data, error } = await supa.auth.mfa.enroll({
-    factorType: "totp",
-    friendlyName: "eltayeb-admin",
-  });
-  if (error || !data) return { ok: false, error: "تعذر بدء التسجيل" };
-  return { ok: true, factorId: data.id, secret: data.totp.secret, uri: data.totp.uri };
+  try {
+    const supa = await createSessionClient();
+    const {
+      data: { user },
+    } = await supa.auth.getUser();
+    if (!user) return { ok: false, error: "سجّل الدخول أولًا" };
+    const { data, error } = await supa.auth.mfa.enroll({
+      factorType: "totp",
+      friendlyName: "eltayeb-admin",
+    });
+    if (error || !data) return { ok: false, error: "تعذر بدء التسجيل — أعد المحاولة" };
+    return { ok: true, factorId: data.id, secret: data.totp.secret, uri: data.totp.uri };
+  } catch {
+    return { ok: false, error: "تعذر بدء التسجيل — أعد المحاولة" };
+  }
 }
 
 /** تأكيد التسجيل أو التحقق عند الدخول برمز 6 أرقام. */
@@ -102,24 +106,29 @@ export async function mfaVerifyAction(input: {
   factorId: string;
   code: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!/^[0-9]{6}$/.test(input.code)) return { ok: false, error: "الرمز 6 أرقام" };
-  const supa = await createSessionClient();
-  const {
-    data: { user },
-  } = await supa.auth.getUser();
-  if (!user) return { ok: false, error: "سجّل الدخول أولًا" };
-  const { data: challenge, error: chErr } = await supa.auth.mfa.challenge({
-    factorId: input.factorId,
-  });
-  if (chErr || !challenge) return { ok: false, error: "تعذر إنشاء التحدي" };
-  const { error } = await supa.auth.mfa.verify({
-    factorId: input.factorId,
-    challengeId: challenge.id,
-    code: input.code,
-  });
-  if (error) return { ok: false, error: "رمز غير صحيح" };
-  await audit(user.id, "admin.mfa_verified", "admin_profiles", user.id, {});
-  redirect("/admin");
+  try {
+    if (!/^[0-9]{6}$/.test(input.code)) return { ok: false, error: "الرمز 6 أرقام" };
+    if (!input.factorId) return { ok: false, error: "اختر الجهاز أولًا" };
+    const supa = await createSessionClient();
+    const {
+      data: { user },
+    } = await supa.auth.getUser();
+    if (!user) return { ok: false, error: "سجّل الدخول أولًا" };
+    const { data: challenge, error: chErr } = await supa.auth.mfa.challenge({
+      factorId: input.factorId,
+    });
+    if (chErr || !challenge) return { ok: false, error: "تعذر إنشاء التحدي — أعد المحاولة" };
+    const { error } = await supa.auth.mfa.verify({
+      factorId: input.factorId,
+      challengeId: challenge.id,
+      code: input.code,
+    });
+    if (error) return { ok: false, error: "رمز غير صحيح — تأكد من وقت الموبايل وحاول مجددًا" };
+    await audit(user.id, "admin.mfa_verified", "admin_profiles", user.id, {});
+    redirect("/admin");
+  } catch {
+    return { ok: false, error: "تعذر التحقق حاليًا — حاول مجددًا" };
+  }
 }
 
 /** عوامل TOTP المسجلة للحساب الحالي. */
