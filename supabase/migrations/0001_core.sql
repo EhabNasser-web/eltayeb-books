@@ -13,7 +13,7 @@ $$;
 
 -- ============ الأقسام ============
 
-CREATE TABLE public.categories (
+CREATE TABLE IF NOT EXISTS public.categories (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   slug text UNIQUE NOT NULL,
   title text NOT NULL,
@@ -24,12 +24,13 @@ CREATE TABLE public.categories (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+DROP TRIGGER IF EXISTS trg_categories_updated ON public.categories;
 CREATE TRIGGER trg_categories_updated BEFORE UPDATE ON public.categories
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
 -- ============ المنتجات ============
 
-CREATE TABLE public.products (
+CREATE TABLE IF NOT EXISTS public.products (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
   slug text UNIQUE NOT NULL,
@@ -46,14 +47,15 @@ CREATE TABLE public.products (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_products_published ON public.products(is_published);
-CREATE INDEX idx_products_category ON public.products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_published ON public.products(is_published);
+CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category_id);
+DROP TRIGGER IF EXISTS trg_products_updated ON public.products;
 CREATE TRIGGER trg_products_updated BEFORE UPDATE ON public.products
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
 -- ============ متغيرات المنتج (المقاسات) ============
 
-CREATE TABLE public.product_variants (
+CREATE TABLE IF NOT EXISTS public.product_variants (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id uuid NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
   title text NOT NULL,
@@ -66,17 +68,18 @@ CREATE TABLE public.product_variants (
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (product_id, title)
 );
-CREATE INDEX idx_variants_product ON public.product_variants(product_id);
+CREATE INDEX IF NOT EXISTS idx_variants_product ON public.product_variants(product_id);
+DROP TRIGGER IF EXISTS trg_variants_updated ON public.product_variants;
 CREATE TRIGGER trg_variants_updated BEFORE UPDATE ON public.product_variants
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
 -- ============ الطلبات ============
 
-CREATE SEQUENCE public.order_seq START 1042;
+CREATE SEQUENCE IF NOT EXISTS public.order_seq START 1042;
 CREATE OR REPLACE FUNCTION public.next_order_number()
 RETURNS text LANGUAGE sql AS $$ SELECT 'T-' || nextval('public.order_seq') $$;
 
-CREATE TABLE public.orders (
+CREATE TABLE IF NOT EXISTS public.orders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_number text UNIQUE NOT NULL DEFAULT public.next_order_number(),
   status text NOT NULL DEFAULT 'new'
@@ -98,12 +101,13 @@ CREATE TABLE public.orders (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_orders_status ON public.orders(status);
-CREATE INDEX idx_orders_created ON public.orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created ON public.orders(created_at DESC);
+DROP TRIGGER IF EXISTS trg_orders_updated ON public.orders;
 CREATE TRIGGER trg_orders_updated BEFORE UPDATE ON public.orders
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
-CREATE TABLE public.order_items (
+CREATE TABLE IF NOT EXISTS public.order_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id uuid NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
   product_id uuid NOT NULL,
@@ -115,11 +119,11 @@ CREATE TABLE public.order_items (
   quantity int NOT NULL CHECK (quantity > 0 AND quantity <= 99),
   line_total numeric(10,2) NOT NULL CHECK (line_total >= 0)
 );
-CREATE INDEX idx_items_order ON public.order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_items_order ON public.order_items(order_id);
 
 -- ============ قائمة الانتظار ============
 
-CREATE TABLE public.waitlist (
+CREATE TABLE IF NOT EXISTS public.waitlist (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   contact text NOT NULL,
   channel text NOT NULL CHECK (channel IN ('phone','email')),
@@ -130,21 +134,22 @@ CREATE TABLE public.waitlist (
   created_at timestamptz NOT NULL DEFAULT now(),
   CHECK (category_id IS NOT NULL OR product_id IS NOT NULL)
 );
-CREATE INDEX idx_waitlist_status ON public.waitlist(status);
+CREATE INDEX IF NOT EXISTS idx_waitlist_status ON public.waitlist(status);
 
 -- ============ المحتوى والإعدادات ============
 
-CREATE TABLE public.content_blocks (
+CREATE TABLE IF NOT EXISTS public.content_blocks (
   key text PRIMARY KEY,
   title text NOT NULL,
   body_html text NOT NULL DEFAULT '',
   is_public boolean NOT NULL DEFAULT true,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+DROP TRIGGER IF EXISTS trg_content_updated ON public.content_blocks;
 CREATE TRIGGER trg_content_updated BEFORE UPDATE ON public.content_blocks
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
 
-CREATE TABLE public.site_settings (
+CREATE TABLE IF NOT EXISTS public.site_settings (
   key text PRIMARY KEY,
   value text NOT NULL DEFAULT '',
   label text NOT NULL DEFAULT '',
@@ -153,13 +158,13 @@ CREATE TABLE public.site_settings (
 
 -- ============ الإدارة والتدقيق ============
 
-CREATE TABLE public.admin_profiles (
+CREATE TABLE IF NOT EXISTS public.admin_profiles (
   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role text NOT NULL DEFAULT 'owner' CHECK (role IN ('owner')),
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE public.audit_log (
+CREATE TABLE IF NOT EXISTS public.audit_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   actor uuid,
   action text NOT NULL,
@@ -168,11 +173,11 @@ CREATE TABLE public.audit_log (
   details jsonb NOT NULL DEFAULT '{}',
   created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_audit_created ON public.audit_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON public.audit_log(created_at DESC);
 
 -- ============ صندوق الصادر (outbox) ============
 
-CREATE TABLE public.outbox_events (
+CREATE TABLE IF NOT EXISTS public.outbox_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   event text NOT NULL,
   payload jsonb NOT NULL,
@@ -182,7 +187,7 @@ CREATE TABLE public.outbox_events (
   last_error text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_outbox_pending ON public.outbox_events(status, next_attempt_at);
+CREATE INDEX IF NOT EXISTS idx_outbox_pending ON public.outbox_events(status, next_attempt_at);
 
 -- ============ إنشاء الطلب ذريًا (orders + items + outbox) ============
 
@@ -252,6 +257,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('product-images', 'product-images', true)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "قراءة عامة لصور المنتجات" ON storage.objects;
 CREATE POLICY "قراءة عامة لصور المنتجات"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'product-images');
@@ -271,14 +277,17 @@ ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.outbox_events ENABLE ROW LEVEL SECURITY;
 
 -- الزائر: يقرأ الأقسام (بما فيها coming_soon للصفحات التشويقية)
+DROP POLICY IF EXISTS "قراءة الأقسام للجميع" ON public.categories;
 CREATE POLICY "قراءة الأقسام للجميع"
   ON public.categories FOR SELECT TO anon, authenticated USING (true);
 
 -- الزائر: يقرأ المنتجات المنشورة فقط
+DROP POLICY IF EXISTS "قراءة المنتجات المنشورة" ON public.products;
 CREATE POLICY "قراءة المنتجات المنشورة"
   ON public.products FOR SELECT TO anon, authenticated USING (is_published = true);
 
 -- الزائر: يقرأ متغيرات المنتجات المنشورة فقط
+DROP POLICY IF EXISTS "قراءة متغيرات المنشور" ON public.product_variants;
 CREATE POLICY "قراءة متغيرات المنشور"
   ON public.product_variants FOR SELECT TO anon, authenticated
   USING (EXISTS (
@@ -286,10 +295,12 @@ CREATE POLICY "قراءة متغيرات المنشور"
   ));
 
 -- الزائر: المحتوى العام فقط
+DROP POLICY IF EXISTS "قراءة المحتوى العام" ON public.content_blocks;
 CREATE POLICY "قراءة المحتوى العام"
   ON public.content_blocks FOR SELECT TO anon, authenticated USING (is_public = true);
 
 -- الزائر: الإعدادات العامة فقط (تواصل + شحن للعرض)
+DROP POLICY IF EXISTS "قراءة الإعدادات العامة" ON public.site_settings;
 CREATE POLICY "قراءة الإعدادات العامة"
   ON public.site_settings FOR SELECT TO anon, authenticated USING (is_public = true);
 
