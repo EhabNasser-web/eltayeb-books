@@ -11,12 +11,14 @@ export function ProductCard({
   price,
   oldPrice,
   stock,
+  href,
 }: {
   title: string;
   author?: string;
   price: string;
   oldPrice?: string;
   stock: StockState;
+  href: string;
 }) {
   return (
     <article className="flex max-w-xs flex-col gap-3">
@@ -37,7 +39,7 @@ export function ProductCard({
         ) : (
           <Badge tone="error">غير متوفر حاليًا</Badge>
         )}
-        <Button variant="text" size="sm" href="#">
+        <Button variant="text" size="sm" href={href}>
           التفاصيل
         </Button>
       </div>

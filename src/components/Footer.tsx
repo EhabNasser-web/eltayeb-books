@@ -9,6 +9,13 @@ const links = [
   { label: "واتساب", href: SITE.whatsappHref },
 ];
 
+const infoLinks = [
+  { label: "من نحن", href: "/info/about" },
+  { label: "الاستبدال والاسترجاع", href: "/info/return-policy" },
+  { label: "الشحن والدفع", href: "/info/shipping-payment" },
+  { label: "الخصوصية", href: "/info/privacy" },
+];
+
 export function Footer() {
   return (
     <footer className="mt-20 bg-primary-deep text-paper">
@@ -32,6 +39,18 @@ export function Footer() {
                     rel="noopener noreferrer"
                     className="text-paper/90 underline-offset-4 hover:underline"
                   >
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <nav aria-label="معلومات">
+            <p className="font-medium text-accent">اعرف أكتر</p>
+            <ul className="mt-2 space-y-1">
+              {infoLinks.map((l) => (
+                <li key={l.label}>
+                  <a href={l.href} className="text-paper/90 underline-offset-4 hover:underline">
                     {l.label}
                   </a>
                 </li>

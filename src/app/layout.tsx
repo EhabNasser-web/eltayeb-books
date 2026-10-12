@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Amiri, Aref_Ruqaa, IBM_Plex_Sans_Arabic, Reem_Kufi } from "next/font/google";
+import { CartProvider } from "@/components/CartProvider";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import "./globals.css";
 
 // خط العناوين الفائز بالمقارنة (docs/DESIGN.md): Aref Ruqaa — روح كتابية تناسب اللوجو.
@@ -41,11 +43,6 @@ export const metadata: Metadata = {
   title: "الطيب للكتب | كتب قيّمة لحد باب بيتك",
   description: "متجر الطيب للكتب — كتب دينية وكتب تزكية النفس، توصيل لباب البيت في كل محافظات مصر.",
   // TODO(copy): راجع الوصف بعد كتابة المحتوى النهائي في المرحلة 1.
-  robots: {
-    // صفحة «قيد التجهيز» مؤقتة — تُفهرس بعد إطلاق المحتوى الحقيقي في المرحلة 1.
-    index: false,
-    follow: true,
-  },
   openGraph: {
     title: "الطيب للكتب",
     description: "كتب قيّمة لحد باب بيتك",
@@ -66,9 +63,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${display.variable} ${body.variable} ${amiri.variable} ${ruqaa.variable} ${kufi.variable}`}
     >
       <body className="font-body min-h-screen bg-paper text-ink antialiased">
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <CartProvider>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+          <WhatsAppFloat />
+        </CartProvider>
       </body>
     </html>
   );

@@ -135,8 +135,14 @@ export default function StyleguidePage() {
           <div className="w-44">
             <BookCover title="المختصر في التفسير" />
           </div>
-          <ProductCard title="المختصر في التفسير" price="260" oldPrice="275" stock="in_stock" />
-          <ProductCard title="القرآن تدبر وعمل" price="400" stock="out_of_stock" />
+          <ProductCard
+            title="المختصر في التفسير"
+            price="260"
+            oldPrice="275"
+            stock="in_stock"
+            href="#"
+          />
+          <ProductCard title="القرآن تدبر وعمل" price="400" stock="out_of_stock" href="#" />
         </div>
       </GuideSection>
 

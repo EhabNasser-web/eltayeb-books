@@ -23,6 +23,12 @@ export function Header() {
             <span className="font-display text-2xl leading-snug text-ink">{SITE.name}</span>
           </Link>
           <nav className="flex items-center gap-4" aria-label="التنقل الرئيسي">
+            <Link
+              href="/cart"
+              className="text-base font-medium text-primary underline decoration-accent decoration-2 underline-offset-4 hover:text-primary-deep"
+            >
+              العربة
+            </Link>
             <a
               href={SITE.facebook}
               target="_blank"
@@ -31,13 +37,6 @@ export function Header() {
             >
               فيسبوك
             </a>
-            <span
-              role="status"
-              title="العربة ستُفعَّل مع إطلاق المتجر في المرحلة 1"
-              className="cursor-not-allowed text-base text-muted"
-            >
-              العربة (قريبًا)
-            </span>
           </nav>
         </Container>
       </header>
