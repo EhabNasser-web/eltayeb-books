@@ -20,7 +20,8 @@ export const checkoutSchema = z.object({
   notes: z.string().trim().max(1000).optional().default(""),
   paymentMethod: z.enum(["cod", "prepaid"], { error: "طريقة دفع غير صالحة" }),
   idempotencyKey: z.string().uuid("مفتاح طلب غير صالح"),
-  turnstileToken: z.string().min(1, "تحقق الحماية مطلوب"),
+  // يقبل فارغًا — verifyTurnstile يفشل مغلقًا في الإنتاج ويتجاوز في التطوير فقط
+  turnstileToken: z.string(),
 });
 
 export const waitlistSchema = z.object({
@@ -29,13 +30,13 @@ export const waitlistSchema = z.object({
   categoryId: z.string().uuid().nullish(),
   productId: z.string().uuid().nullish(),
   variantId: z.string().uuid().nullish(),
-  turnstileToken: z.string().min(1, "تحقق الحماية مطلوب"),
+  turnstileToken: z.string(),
 });
 
 export const adminLoginSchema = z.object({
   email: z.string().email("إيميل غير صالح").max(200),
   password: z.string().min(1, "كلمة السر مطلوبة").max(200),
-  turnstileToken: z.string().min(1, "تحقق الحماية مطلوب"),
+  turnstileToken: z.string(),
 });
 
 export const productSchema = z.object({

@@ -126,7 +126,10 @@ export async function mfaVerifyAction(input: {
     if (error) return { ok: false, error: "رمز غير صحيح — تأكد من وقت الموبايل وحاول مجددًا" };
     await audit(user.id, "admin.mfa_verified", "admin_profiles", user.id, {});
     redirect("/admin");
-  } catch {
+  } catch (err) {
+    // redirect() يرمي NEXT_REDIRECT — يجب إعادة رميه لا التقاطه
+    const digest = (err as { digest?: string } | null)?.digest;
+    if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) throw err;
     return { ok: false, error: "تعذر التحقق حاليًا — حاول مجددًا" };
   }
 }
